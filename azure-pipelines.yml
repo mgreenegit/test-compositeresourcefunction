@@ -1,0 +1,44 @@
+pool: 'Hosted VS2017'
+
+variables:
+- name: 'resourcegroup'
+  value: 'contosodev-testfunctionsapp'
+- name: 'appname'
+  value: 'testcompositeresource'
+
+trigger:
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+    - README.md
+    - LICENSE
+    - .gitignore
+    - .github/*
+
+steps:
+- powershell: |
+    Update-Module 'AzureRM' -force
+    Install-Module 'AzureRM.GuestConfiguration' -AllowPreRelease -Force
+  displayName: 'Update Azure PowerShell modules'
+
+- task: AzurePowerShell@3
+  displayName: 'Validate resource group and create if needed'
+  inputs:
+    azureSubscription: 'ARM'
+    azurePowerShellVersion: 'latestVersion'
+    scriptType: 'inlineScript'
+    inline: |
+      $ResourceGroup = Get-AzureRmResourceGroup -Name $(resourcegroup) -ErrorAction SilentlyContinue
+      if ($null -eq $ResourceGroup) {$ResourceGroup = New-AzureRMResourceGroup -Name $(resourcegroup) -Location 'eastus2'}
+
+- task: AzureResourceGroupDeployment@2
+  displayName: "Deploy function Azure"
+  inputs:
+    azureSubscription: 'ARM'
+    resourceGroupName: '$(resourcegroup)'
+    type: 'Complete'
+    location: 'eastus2'
+    csmFile: deploy.json
+    overrideParameters: '-appName $(appname)'
