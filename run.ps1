@@ -1,0 +1,1 @@
+'hello, world' | Out-File -encoding Ascii -FilePath $res
