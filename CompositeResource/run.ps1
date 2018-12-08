@@ -155,7 +155,7 @@ else {
 $guid = new-guid | % Guid
 $config | set-content "$env:temp\$guid.ps1"
 mkdir "$env:temp\module"
-ConvertTo-CompositeResource -script "$env:temp\$guid.ps1" -out "$env:temp\module"
+ConvertTo-CompositeResource -script "$env:temp\$guid.ps1" -moduleversion '0.1' -out "$env:temp\module"
 $out = ls "$env:temp\module"
 
 $response = @{
