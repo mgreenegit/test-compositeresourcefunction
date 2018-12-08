@@ -57,8 +57,7 @@
     .EXAMPLE
         ConvertTo-CompositeResource -ConfigurationName 'Test' -Author 'Name' -Description 'Text'
 #>
-function ConvertTo-CompositeResource
-{
+function ConvertTo-CompositeResource {
     [CmdletBinding(DefaultParameterSetName = 'ByConfiguration')]
     param
     (
@@ -95,25 +94,20 @@ function ConvertTo-CompositeResource
         $OutputPath = '.\'
     )
 
-    switch ($PsCmdlet.ParameterSetName)
-    {
-        "ByConfigurationName"
-        {
+    switch ($PsCmdlet.ParameterSetName) {
+        "ByConfigurationName" {
             $configuration = Get-Command -Name $ConfigurationName -CommandType 'Configuration' -ErrorAction SilentlyContinue
-            if (-not $configuration)
-            {
+            if (-not $configuration) {
                 throw ('Could not find a configuration ''{0}'' loaded in the session.' -f $ConfigurationName)
             }
         }
 
-        "ByScript"
-        {
+        "ByScript" {
             # Get the configuration definition ast.
             $parseErrors = $null
             $definitionAst = [System.Management.Automation.Language.Parser]::ParseInput($Script, [ref] $null, [ref] $parseErrors)
 
-            if ($parseErrors)
-            {
+            if ($parseErrors) {
                 throw $parseErrors
             }
 
@@ -127,8 +121,7 @@ function ConvertTo-CompositeResource
             $parseErrors = $null
             $definitionAst = [System.Management.Automation.Language.Parser]::ParseInput($configurationDefinitionAst.Body.Extent.Text, [ref] $null, [ref] $parseErrors)
 
-            if ($parseErrors)
-            {
+            if ($parseErrors) {
                 throw $parseErrors
             }
 
@@ -147,19 +140,17 @@ function ConvertTo-CompositeResource
 
             # Build the correct configuration values.
             $configuration = @{
-                Definition =  $configurationDefinition
+                Definition = $configurationDefinition
             }
 
             $ConfigurationName = $configurationDefinitionAst.InstanceName.Value
 
             # Set default values if they are not set.
-            if (-not $PSBoundParameters.ContainsKey('ResourceName'))
-            {
+            if (-not $PSBoundParameters.ContainsKey('ResourceName')) {
                 $ResourceName = $ConfigurationName
             }
 
-            if (-not $PSBoundParameters.ContainsKey('ModuleName'))
-            {
+            if (-not $PSBoundParameters.ContainsKey('ModuleName')) {
                 $ModuleName = "$($ConfigurationName)DSC"
             }
         }
@@ -171,8 +162,7 @@ function ConvertTo-CompositeResource
     $configurationFolder = Join-Path -Path $dscResourcesFolder -ChildPath $ResourceName
 
     # Creates the folder structure if any folder does not exist.
-    if (-not (Resolve-Path -Path $configurationFolder -ErrorAction 'SilentlyContinue'))
-    {
+    if (-not (Resolve-Path -Path $configurationFolder -ErrorAction 'SilentlyContinue')) {
         New-Item -Path $configurationFolder -ItemType Directory -Force -ErrorAction Stop | Out-Null
     }
 
@@ -190,14 +180,12 @@ $($configuration.Definition)
     $resourceNames = @()
 
     # If we already got a module manifest, then pick up any existing resource names.
-    if (Test-Path -Path $modulePsd1)
-    {
+    if (Test-Path -Path $modulePsd1) {
         $moduleManifest = Import-PowerShellDataFile -Path $modulePsd1
         $resourceNames = @($moduleManifest.DscResourcesToExport)
     }
 
-    if ($resourceNames -notcontains $ResourceName)
-    {
+    if ($resourceNames -notcontains $ResourceName) {
         $resourceNames += $ResourceName
     }
 
