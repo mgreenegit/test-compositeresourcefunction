@@ -107,7 +107,7 @@ $($config)
 
 $guid = new-guid | % guid
 mkdir "$env:temp\$guid\"
-ConvertTo-CompositeResource -script "$env:temp\$guid.ps1" -moduleversion '0.1.0' -out "$env:temp\$guid\"
+ConvertTo-CompositeResource -configuration $config -out "$env:temp\$guid\"
 $out = ls "$env:temp\$guid\"
 
 $response = @{
