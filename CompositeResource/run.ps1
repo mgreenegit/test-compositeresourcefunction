@@ -1,7 +1,7 @@
-$request = gc $req -Raw | ConvertFrom-Json
+$request = Get-Content $req -Raw | ConvertFrom-Json
  
 $response = @{
-    Message = $request.config
+    Message = $request
 } | ConvertTo-Json
  
 Out-File -InputObject $response -FilePath $res -Encoding Ascii
