@@ -18,11 +18,6 @@ trigger:
     - .github/*
 
 steps:
-- powershell: |
-    Update-Module 'AzureRM' -force
-    Install-Module 'AzureRM.GuestConfiguration' -AllowPreRelease -Force
-  displayName: 'Update Azure PowerShell modules'
-
 - task: AzurePowerShell@3
   displayName: 'Validate resource group and create if needed'
   inputs:
