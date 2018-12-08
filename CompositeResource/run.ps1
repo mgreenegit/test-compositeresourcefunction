@@ -14,7 +14,7 @@ function ConvertTo-CompositeResource {
         [string]
         $ModuleName = "$($ConfigurationName)DSC",
 
-        [Parameter(Mandatory = $true)]
+        [Parameter()]
         [version]
         $ModuleVersion = '1.0.0',
 
