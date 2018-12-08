@@ -2,13 +2,9 @@ function ConvertTo-CompositeResource {
     [CmdletBinding(DefaultParameterSetName = 'ByConfiguration')]
     param
     (
-        [Parameter(Mandatory = $true, ParameterSetName = 'ByConfigurationName')]
+        [Parameter(Mandatory = $true)]
         [string]
         $ConfigurationName,
-
-        [Parameter(Mandatory = $true, ParameterSetName = 'ByScript')]
-        [string]
-        $Script,
 
         [Parameter()]
         [string]
@@ -20,11 +16,11 @@ function ConvertTo-CompositeResource {
 
         [Parameter(Mandatory = $true)]
         [version]
-        $ModuleVersion,
+        $ModuleVersion = '1.0.0',
 
         [Parameter()]
         [string]
-        $Author = $env:USERNAME,
+        $Author = 'function',
 
         [Parameter()]
         [string]
@@ -35,66 +31,9 @@ function ConvertTo-CompositeResource {
         $OutputPath = '.\'
     )
 
-    switch ($PsCmdlet.ParameterSetName) {
-        "ByConfigurationName" {
-            $configuration = Get-Command -Name $ConfigurationName -CommandType 'Configuration' -ErrorAction SilentlyContinue
-            if (-not $configuration) {
-                throw ('Could not find a configuration ''{0}'' loaded in the session.' -f $ConfigurationName)
-            }
-        }
-
-        "ByScript" {
-            # Get the configuration definition ast.
-            $parseErrors = $null
-            $definitionAst = [System.Management.Automation.Language.Parser]::ParseInput($Script, [ref] $null, [ref] $parseErrors)
-
-            if ($parseErrors) {
-                throw $parseErrors
-            }
-
-            $astFilter = {
-                $args[0] -is [System.Management.Automation.Language.ConfigurationDefinitionAst]
-            }
-
-            $configurationDefinitionAst = $definitionAst.Find($astFilter, $false)
-
-            # Get the script block definition ast, from the result of the configuration definition ast.
-            $parseErrors = $null
-            $definitionAst = [System.Management.Automation.Language.Parser]::ParseInput($configurationDefinitionAst.Body.Extent.Text, [ref] $null, [ref] $parseErrors)
-
-            if ($parseErrors) {
-                throw $parseErrors
-            }
-
-            $astFilter = {
-                $args[0] -is [System.Management.Automation.Language.ScriptBlockAst]
-            }
-
-            $configurationContentDefinitionAst = $definitionAst.Find($astFilter, $false)
-
-            # Removes the beginning open brace an ending closing brace of the script block.
-            $configurationDefinition = $configurationContentDefinitionAst.Extent.Text
-            $configurationDefinition = `
-                $configurationDefinition.Remove($configurationContentDefinitionAst.Extent.EndScriptPosition.Offset - 1, 1)
-            $configurationDefinition = `
-                $configurationDefinition.Remove($configurationContentDefinitionAst.Extent.StartScriptPosition.Offset, 1)
-
-            # Build the correct configuration values.
-            $configuration = @{
-                Definition = $configurationDefinition
-            }
-
-            $ConfigurationName = $configurationDefinitionAst.InstanceName.Value
-
-            # Set default values if they are not set.
-            if (-not $PSBoundParameters.ContainsKey('ResourceName')) {
-                $ResourceName = $ConfigurationName
-            }
-
-            if (-not $PSBoundParameters.ContainsKey('ModuleName')) {
-                $ModuleName = "$($ConfigurationName)DSC"
-            }
-        }
+    $configuration = Get-Command -Name $ConfigurationName -CommandType 'Configuration' -ErrorAction SilentlyContinue
+    if (-not $configuration) {
+        throw ('Could not find a configuration ''{0}'' loaded in the session.' -f $ConfigurationName)
     }
 
     $moduleFolder = Join-Path -Path $OutputPath -ChildPath $ModuleName
@@ -152,8 +91,21 @@ else {
     $config = $request.config
 }
 
-$guid = new-guid | % Guid
-$config | set-content "$env:temp\$guid.ps1"
+if ($req_query_name) {
+    $name = $req_query_name
+}
+else {
+    $name = $request.name
+}
+
+$config = @"
+Configuration $name
+{
+$($config)
+}
+"@
+
+$guid = new-guid | % guid
 mkdir "$env:temp\$guid\"
 ConvertTo-CompositeResource -script "$env:temp\$guid.ps1" -moduleversion '0.1.0' -out "$env:temp\$guid\"
 $out = ls "$env:temp\$guid\"
