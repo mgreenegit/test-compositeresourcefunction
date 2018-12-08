@@ -152,10 +152,11 @@ else {
     $config = $request.config
 }
 
-$config | set-content .\config.ps1
-
-ConvertTo-CompositeResource -script .\config.ps1
-$out = ls .\
+$guid = new-guid | % Guid
+$config | set-content "$env:temp\$guid.ps1"
+mkdir "$env:temp\module"
+ConvertTo-CompositeResource -script "$env:temp\$guid.ps1" -out "$env:temp\module"
+$out = ls "$env:temp\module"
 
 $response = @{
     Config = $out
