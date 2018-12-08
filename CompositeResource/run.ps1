@@ -1,1 +1,1 @@
-'hello, world' | Out-File -encoding Ascii -FilePath $res
+$req | Out-File -encoding Ascii -FilePath $res
